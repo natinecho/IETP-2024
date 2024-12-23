@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tanker_monitering_app/Home.dart';
 
 void main() {
   runApp(const MyApp());
@@ -73,6 +74,7 @@ class HomePage extends StatelessWidget {
               const Spacer(), // Large gap between the content above and the button
               ElevatedButton(
                 onPressed: () {
+                 Navigator.of(context).push(MaterialPageRoute(builder: (context) => Home()));
                   // Add your login logic here
                 },
                 style: ElevatedButton.styleFrom(
