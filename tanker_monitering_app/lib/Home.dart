@@ -52,7 +52,7 @@ class _HomeState extends State<Home> {
           ? const HomeScreen()
           : _currentIndex == 1
               ? const StatusScreen()
-              : const ProfileScreen(),
+              : const UserProfile(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {

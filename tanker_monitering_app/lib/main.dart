@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tanker_monitering_app/Home.dart';
+import 'package:tanker_monitering_app/login.dart';
 
 void main() {
   runApp(const MyApp());
@@ -45,20 +46,20 @@ class HomePage extends StatelessWidget {
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const   Spacer(), // Large gap between the content above and the button
+              const Spacer(), // Large gap between the content above and the button
               const Column(
                 children: [
                   Text(
-                    'Welcome',
+                    'WELCOME',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: Colors.teal,
+                      color: Colors.lightBlue,
                     ),
                   ),
                   SizedBox(height: 100),
                   Text(
-                    '"Monitor water Stay healthy"',
+                    '"Monitor Water, Stay healthy!"',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 20,
@@ -74,11 +75,12 @@ class HomePage extends StatelessWidget {
               const Spacer(), // Large gap between the content above and the button
               ElevatedButton(
                 onPressed: () {
-                 Navigator.of(context).push(MaterialPageRoute(builder: (context) => Home()));
+                  Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (context) => LoginPage()));
                   // Add your login logic here
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.cyan,
+                  backgroundColor: Colors.lightBlue,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
@@ -89,7 +91,10 @@ class HomePage extends StatelessWidget {
                 ),
                 child: const Text(
                   'Login',
-                  style: TextStyle(fontSize: 18),
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.white,
+                  ),
                 ),
               ),
               const SizedBox(height: 50), // Space below the button
