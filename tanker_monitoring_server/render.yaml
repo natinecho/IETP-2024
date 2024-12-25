@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: ietp_smart_water_server
+    runtime: node
+    buildCommand: npm install && npx tsc
+    startCommand: node dist/index.js
+    plan: free # or "starter", "standard", etc., based on your choice
+    autoDeploy: true
