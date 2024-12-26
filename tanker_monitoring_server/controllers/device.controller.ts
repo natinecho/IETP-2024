@@ -2,9 +2,11 @@ import { Response } from "express";
 import { RegisterDeviceRequest, UpdateDeviceRequest } from "../express/DeviceRequest";
 import { DeviceRepository } from "../database/repositories/device.repository";
 import { Device } from "../database/entities/device.entity";
+import { UsageHistoryRepository } from "../database/repositories/usageHistory.repository";
 
 export const recordReading = async (req: UpdateDeviceRequest, res: Response) => {
   const deviceRepository = new DeviceRepository();
+  const usageHistoryRepository = new UsageHistoryRepository();
 
   const { macAddress, temperature, turbidity, waterLevel } = req.body;
 
@@ -28,6 +30,8 @@ export const recordReading = async (req: UpdateDeviceRequest, res: Response) => 
     return;
   }
 
+  const prevVolume = device.waterLevel || 0;
+  
   await deviceRepository.update(macAddress, turbidity, temperature, waterLevel);
   res.status(200).json({
     status: "success",
@@ -35,6 +39,20 @@ export const recordReading = async (req: UpdateDeviceRequest, res: Response) => 
       mac_address: macAddress,
     },
   });
+
+  if (! await usageHistoryRepository.getUsageHistoryToday(device.macAddress)){
+    await usageHistoryRepository.add(device.macAddress);
+  }
+  
+  if (prevVolume > waterLevel) {
+    const usageHistory = await usageHistoryRepository.getUsageHistoryToday(device.macAddress);
+
+    if (!usageHistory) return;
+
+    usageHistory.volume = (usageHistory.volume || 0) + prevVolume - waterLevel;
+
+    await usageHistoryRepository.update(usageHistory);
+  }
 };
 
 export const registerDevice = async (req: RegisterDeviceRequest, res: Response) => {

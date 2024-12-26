@@ -9,6 +9,7 @@ import {
 } from "../express/UserRequest";
 import { DeviceRepository } from "../database/repositories/device.repository";
 import { User } from "../database/entities/user.entity";
+import { UsageHistoryRepository } from "../database/repositories/usageHistory.repository";
 
 // water_level_notification_preference
 // water_quality_notification_preference
@@ -267,4 +268,40 @@ export const notificationController = async (req: UserNotificationRequest, res: 
       turbidityNotification
     }
   })
+}
+
+export const usageHistoryController = async (req: Request, res: Response) => {
+  const userRepository = new UserRepository();
+  const usageHistoryRepository = new UsageHistoryRepository();
+
+  const username = req.params.username;
+
+  if (!username || username.trim() == "") {
+    res.status(404).json({
+      status: "fail",
+      message: "Bad Request!"
+    });
+
+    return;
+  }
+
+  const user = await userRepository.findByUsername(username);
+
+  if (!user) {
+    res.status(404).json({
+      status: "fail",
+      message: "User not Found"
+    });
+
+    return;
+  }
+
+  const usageHistory = await usageHistoryRepository.getUsageHistory(user.device.macAddress);
+
+  res.status(200).json({
+    status: "success",
+    body: {
+      usageHistory
+    }
+  });
 }
