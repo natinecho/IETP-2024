@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { UserRepository } from "../database/repositories/user.repository";
 import {
   UserLoginRequest,
+  UserNotificationRequest,
   UserRegisterRequest,
   UserUpdatePasswordRequest,
   UserUpdatePreferencesRequest,
@@ -95,7 +96,6 @@ export const loginController = async (req: UserLoginRequest, res: Response) => {
 
 export const getDataController = async (req: Request, res: Response) => {
   const userRepository = new UserRepository();
-  const deviceRepository = new DeviceRepository();
 
   const username = req.params.username;
 
@@ -119,7 +119,7 @@ export const getDataController = async (req: Request, res: Response) => {
     return;
   }
 
-  const device = await deviceRepository.findByMacAddress(user.device.macAddress);
+  const device = user.device;
 
   if (!device) {
     res.status(404).json({
@@ -227,3 +227,44 @@ export const updatePasswordController = async (req: UserUpdatePasswordRequest, r
     },
   });
 };
+
+export const notificationController = async (req: UserNotificationRequest, res: Response) => {
+  const userRepository = new UserRepository();
+
+  const { username, waterLevel, turbidity } = req.body;
+
+  const user = await userRepository.findByUsername(username ?? "");
+  if (!user) {
+    res.status(400).json({
+      status: "fail",
+      message: "User not found.",
+    });
+
+    return;
+  }
+
+  const device = user.device;
+
+  if (!device) {
+    res.status(404).json({
+      status: "fail",
+      message: "Device not found.",
+    });
+
+    return;
+  }
+
+  const minWaterVolume = device.maxVolume * (user.minWaterLevel || 30) / 100;
+  const waterLevelNotification = (waterLevel >= minWaterVolume && (device.waterLevel || 0) < minWaterVolume);
+
+  const maxTurbidity = (user.minWaterQuality || 5);
+  const turbidityNotification = (turbidity <= maxTurbidity && (device.turbidity || 0) > maxTurbidity);
+
+  res.status(200).json({
+    status: "success",
+    body: {
+      waterLevelNotification,
+      turbidityNotification
+    }
+  })
+}

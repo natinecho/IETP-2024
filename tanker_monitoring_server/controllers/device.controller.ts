@@ -8,6 +8,15 @@ export const recordReading = async (req: UpdateDeviceRequest, res: Response) => 
 
   const { macAddress, temperature, turbidity, waterLevel } = req.body;
 
+  if (!macAddress || !temperature || !turbidity || !waterLevel) {
+    res.status(404).json({
+      status: "fail",
+      error: "Bad Request.",
+    });
+
+    return;
+  }
+
   const device = await deviceRepository.findByMacAddress(macAddress);
 
   if (!device) {

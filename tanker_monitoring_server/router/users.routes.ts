@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getDataController,
   loginController,
+  notificationController,
   registerUserController,
   updatePasswordController,
   updatePreferencesController,
@@ -14,5 +15,6 @@ router.route("/signup").post(registerUserController);
 router.route("/").patch(updatePreferencesController);
 router.route("/:username").get(getDataController);
 router.route("/update-password").patch(updatePasswordController);
+router.route("/notification").post(notificationController);
 
 export { router };

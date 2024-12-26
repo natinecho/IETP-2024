@@ -30,3 +30,11 @@ export interface UserUpdatePasswordRequest extends Request {
     newPassword: String;
   };
 }
+
+export interface UserNotificationRequest extends Request {
+  body: {
+    username: String;
+    waterLevel: number;
+    turbidity: number;
+  };
+}
