@@ -1,58 +1,58 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
+class ProfilePage extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: UserProfile(),
-    );
-  }
+  _ProfilePageState createState() => _ProfilePageState();
 }
 
-class UserProfile extends StatefulWidget {
-  const UserProfile({super.key});
+class _ProfilePageState extends State<ProfilePage> {
+  // Controllers for user input
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _minQualityController = TextEditingController();
+  final TextEditingController _minLevelController = TextEditingController();
 
-  @override
-  State<UserProfile> createState() => _UserProfileState();
-}
+  // Function to send data to the API
+  Future<void> _saveProfile() async {
+    final String username = _usernameController.text;
+    final String minQuality = _minQualityController.text;
+    final String minLevel = _minLevelController.text;
 
-class _UserProfileState extends State<UserProfile> {
-  final _formKey = GlobalKey<FormState>();
-
-  final TextEditingController usernameController =
-      TextEditingController(text: "JohnDoe");
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController waterQualityController = TextEditingController();
-  final TextEditingController waterLevelController = TextEditingController();
-
-  bool isAuthenticated = false;
-  bool isPasswordVisible = false;
-  String? userWaterQuality = '30%';
-  String? userWaterLevel = '30%';
-
-  void _authenticate() {
-    if (passwordController.text.isNotEmpty) {
-      setState(() {
-        isAuthenticated = true;
-      });
-    } else {
+    if (username.isEmpty || minQuality.isEmpty || minLevel.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter your password.")),
+        SnackBar(content: Text("Please fill in all fields")),
       );
+      return;
     }
-  }
 
-  void _savePreferences() {
-    if (_formKey.currentState!.validate()) {
+    final url = Uri.parse('https://ietp-smart-water-server.onrender.com/user');
+
+    try {
+      final response = await http.patch(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "username": username,
+          "minQuality": double.parse(minQuality),
+          "minLevel": double.parse(minLevel),
+        }),
+      );
+
+      final responseData = jsonDecode(response.body);
+
+      if (responseData['status'] == 'success') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Profile saved successfully!")),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to save profile: ${responseData['data']}")),
+        );
+      }
+    } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Preferences Saved Successfully")),
+        SnackBar(content: Text("Error saving profile: $error")),
       );
     }
   }
@@ -60,169 +60,101 @@ class _UserProfileState extends State<UserProfile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-     
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 40),
-
-              // Welcome Section
-              Column(
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.blue.shade100,
-                    child:
-                        const Icon(Icons.person, size: 60, color: Colors.blue),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    "Welcome, ${usernameController.text}!",
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    "Please enter your password to change preferences.",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 30),
-                ],
+              Icon(
+                Icons.person,
+                size: 100,
+                color: Colors.blue,
               ),
-
-              // Password and Unlock Button Row
+              const SizedBox(height: 100), // Increased spacing here
+              // Name Input Field
+              TextField(
+                controller: _usernameController,
+                decoration: InputDecoration(
+                  labelText: "Your Name",
+                  hintText: "Enter your name",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30), // Increased spacing here
+              // Notification for Water Quality
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
-                    child: TextFormField(
-                      controller: passwordController,
-                      obscureText: !isPasswordVisible,
-                      decoration: InputDecoration(
-                        labelText: "Enter Password",
-                        border: const OutlineInputBorder(),
-                        prefixIcon: const Icon(Icons.lock),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            isPasswordVisible
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              isPasswordVisible = !isPasswordVisible;
-                            });
-                          },
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "Password is required to proceed.";
-                        }
-                        return null;
-                      },
+                    child: Text(
+                      "Send notification when the water quality is:",
+                      style: TextStyle(fontSize: 16),
+                      softWrap: true,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: _authenticate,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 80,
+                    child: TextField(
+                      controller: _minQualityController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        suffixText: "%",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                    ),
-                    child: const Text(
-                      "Enter",
-                      style: TextStyle(color: Colors.white),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 40),
-
-              // Preferences Section (Visible after authentication)
-              if (isAuthenticated) ...[
-                const Divider(thickness: 1),
-                const SizedBox(height: 30),
-                const Text(
-                  "Set Your Preferences",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: waterQualityController..text = userWaterQuality!,
-                  onChanged: (value) {
-                    setState(() {
-                      userWaterQuality = value;
-                    });
-                  },
-                  decoration: const InputDecoration(
-                    labelText: "Alert when water quality drops below:",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.water_drop),
-                    suffixText: '%',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Enter a water quality percentage.";
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: waterLevelController..text = userWaterLevel!,
-                  onChanged: (value) {
-                    setState(() {
-                      userWaterLevel = value;
-                    });
-                  },
-                  decoration: const InputDecoration(
-                    labelText: "Alert when water level is below:",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.layers),
-                    suffixText: '%',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Enter a water level percentage.";
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 40),
-                ElevatedButton(
-                  onPressed: _savePreferences,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 50, vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+              const SizedBox(height: 30), // Increased spacing here
+              // Notification for Water Level
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      "Send notification when the water level is:",
+                      style: TextStyle(fontSize: 16),
+                      softWrap: true,
                     ),
                   ),
-                  child: const Text(
-                    "Save Preferences",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 80,
+                    child: TextField(
+                      controller: _minLevelController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        suffixText: "%",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 100), // Increased spacing here
+              // Save Button
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  backgroundColor: Colors.blue,
                 ),
-              ]
+                onPressed: _saveProfile,
+                child: Text(
+                  "Save",
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
+              ),
             ],
           ),
         ),
