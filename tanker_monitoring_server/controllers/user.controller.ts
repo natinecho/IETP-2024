@@ -71,7 +71,6 @@ export const loginController = async (req: UserLoginRequest, res: Response) => {
 
   const user = await userRepository.findByUsername(req.body.username);
 
-  console.log(user?.password, req.body.password);
   if (!user) {
     res.status(404).json({
       status: "fail",

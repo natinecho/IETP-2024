@@ -19,8 +19,8 @@ if (ENV.dbURL) {
   dataSource = new DataSource({
     type: "postgres",
     host: "localhost",
-    username: "postgres",
-    password: "root@postgres",
+    username: "ietp",
+    password: "ietpietp",
     database: "ietp_smart_water",
     port: 5432,
     entities: [__dirname + "/entities/**/*.ts"],

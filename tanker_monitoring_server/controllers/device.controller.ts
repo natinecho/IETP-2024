@@ -9,28 +9,28 @@ export const recordReading = async (req: UpdateDeviceRequest, res: Response) => 
   const usageHistoryRepository = new UsageHistoryRepository();
 
   const { macAddress, temperature, turbidity, waterLevel } = req.body;
-
+  
   if (!macAddress || !temperature || !turbidity || !waterLevel) {
     res.status(404).json({
       status: "fail",
       error: "Bad Request.",
     });
-
+    
     return;
   }
-
+  
   const device = await deviceRepository.findByMacAddress(macAddress);
-
+  
   if (!device) {
     res.status(404).json({
       status: "fail",
       error: "Device not found.",
     });
-
+    
     return;
   }
   
-  const waterVolume = device.surfaceArea * (device.maxHeight - waterLevel);
+  const waterVolume = device.surfaceArea * (device.maxHeight - (waterLevel / 100));
 
   const prevVolume = device.waterLevel || 0;
   
