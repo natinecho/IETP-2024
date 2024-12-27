@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { UserRepository } from "../database/repositories/user.repository";
 import {
   UserLoginRequest,
-  UserNotificationRequest,
   UserRegisterRequest,
   UserUpdatePasswordRequest,
   UserUpdatePreferencesRequest,
@@ -10,6 +9,7 @@ import {
 import { DeviceRepository } from "../database/repositories/device.repository";
 import { User } from "../database/entities/user.entity";
 import { UsageHistoryRepository } from "../database/repositories/usageHistory.repository";
+import { NotificationRepository } from "../database/repositories/notification.repository";
 
 // water_level_notification_preference
 // water_quality_notification_preference
@@ -228,10 +228,11 @@ export const updatePasswordController = async (req: UserUpdatePasswordRequest, r
   });
 };
 
-export const notificationController = async (req: UserNotificationRequest, res: Response) => {
+export const notificationController = async (req: Request, res: Response) => {
   const userRepository = new UserRepository();
+  const notificationRepository = new NotificationRepository();
 
-  const { username, waterLevel, turbidity } = req.body;
+  const username = req.params.username
 
   const user = await userRepository.findByUsername(username ?? "");
   if (!user) {
@@ -254,11 +255,10 @@ export const notificationController = async (req: UserNotificationRequest, res: 
     return;
   }
 
-  const minWaterVolume = device.maxVolume * (user.minWaterLevel || 30) / 100;
-  const waterLevelNotification = (waterLevel >= minWaterVolume && (device.waterLevel || 0) < minWaterVolume);
+  const notifications = await notificationRepository.getNotifications(username);
 
-  const maxTurbidity = (user.minWaterQuality || 5);
-  const turbidityNotification = (turbidity <= maxTurbidity && (device.turbidity || 0) > maxTurbidity);
+  const waterLevelNotification = notifications.find((n) => n.type == "volume")?.value;
+  const turbidityNotification = notifications.find((n) => n.type == "turbidity")?.value;
 
   res.status(200).json({
     status: "success",

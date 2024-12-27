@@ -24,7 +24,7 @@ export class User {
   minWaterQuality?: number;
 
   @ManyToOne(() => Device, (device: Device) => device.macAddress)
-  @JoinColumn({ name: "mac_address" })
+  @JoinColumn({ name: "mac_address", referencedColumnName: "macAddress" })
   device!: Device;
 
   @Column({ name: "mac_address" })
