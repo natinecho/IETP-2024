@@ -84,6 +84,7 @@ import 'package:tanker_monitering_app/notification_page.dart';
 import 'home_screen.dart';
 import 'status_screen.dart';
 import 'profile_screen.dart';
+import 'history_screen.dart';
 
 class Home extends StatefulWidget {
   final String username;
@@ -99,7 +100,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   int _currentIndex = 0;
-  final List<String> _pageTitles = ["Home", "Status", "Profile"];
+  final List<String> _pageTitles = ["Home", "Status", "Profile", "History"];
 
   @override
   Widget build(BuildContext context) {
@@ -136,7 +137,12 @@ class _HomeState extends State<Home> {
           ? HomeScreen(username: widget.username)
           : _currentIndex == 1
               ? StatusScreen(username: widget.username)
-              : ProfilePage(),
+                : _currentIndex == 2
+                  ? UserProfile(username: widget.username) // Profile screen
+                  : HistoryScreen(username: widget.username), 
+
+          
+            
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
@@ -157,7 +163,16 @@ class _HomeState extends State<Home> {
             icon: Icon(Icons.person),
             label: "Profile",
           ),
+            BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: "History",
+          ),
+          
         ],
+        selectedItemColor: Colors.blue, // Icon color when selected
+        unselectedItemColor: Colors.grey, // Icon color when unselected
+        backgroundColor:
+            Colors.white, // Background color of the BottomNavigationBar
       ),
     );
   }
