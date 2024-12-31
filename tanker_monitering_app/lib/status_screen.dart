@@ -27,31 +27,47 @@ class _StatusScreenState extends State<StatusScreen> {
     _fetchDeviceData();
   }
 
-  // Fetch data from the API and update the status values
   Future<void> _fetchDeviceData() async {
+    final url = Uri.parse(
+        // "https://3qphcqlw-3000.uks1.devtunnels.ms/user/${widget.username}");
+        "https://ietp-smart-water-server.onrender.com/user/${widget.username}");
     try {
-      final response = await http.get(Uri.parse('https://ietp-smart-water-server.onrender.com/user/${widget.username}'));
-
+      final response = await http.get(url);
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['status'] == 'success' && data['data'] != null) {
-          final deviceData = data['data']['user']['device'];
+        final Map<String, dynamic> responseData = json.decode(response.body);
+
+        if (responseData["status"] == "success" &&
+            responseData["data"] != null) {
+          final user = responseData["data"]["user"];
+          final device = user["device"];
+
           setState(() {
-            _statusValues = {
-              "Water Level": (deviceData['waterLevel'] ?? 0.0).toDouble(),
-              "Turbidity": (deviceData['turbidity'] ?? 0.0).toDouble(),
-              "Temperature": (deviceData['temperature'] ?? 0.0).toDouble(),
-            };
+            // Calculate values in percentage
+            double maxVolume = double.parse(device["maxVolume"]);
+            double waterLevelInCubicMeters = double.parse(device["waterLevel"]);
+            _statusValues["Water Level"] =
+                (waterLevelInCubicMeters / maxVolume) * 100;
+
+            _statusValues["Turbidity"] =
+                double.parse(device["turbidity"]) * 100;
+            _statusValues["Temperature"] = double.parse(device["temperature"]);
+
             _isLoading = false;
           });
         } else {
-          print('Error: Invalid response data');
+          setState(() {
+            _isLoading = false;
+          });
         }
       } else {
-        print('Failed to load data: ${response.statusCode}');
+        setState(() {
+          _isLoading = false;
+        });
       }
     } catch (e) {
-      print('Error fetching data: $e');
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 

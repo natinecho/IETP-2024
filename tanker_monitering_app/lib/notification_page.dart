@@ -27,7 +27,7 @@ class _NotificationPageState extends State<NotificationPage> {
   }
 
   Future<void> fetchUserDataAndNotify() async {
-    const userApiUrl = 'https://ietp-smart-water-server.onrender.com/user/';
+    const userApiUrl = 'https://3qphcqlw-3000.uks1.devtunnels.ms/user/';
     const notificationApiUrl =
         'https://3qphcqlw-3000.uks1.devtunnels.ms/user/notification';
 

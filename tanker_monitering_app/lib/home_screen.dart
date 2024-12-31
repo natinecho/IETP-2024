@@ -50,6 +50,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _fetchWaterData() async {
     final url = Uri.parse(
+        // "https://3qphcqlw-3000.uks1.devtunnels.ms/user/${widget.username}");
         "https://ietp-smart-water-server.onrender.com/user/${widget.username}");
     try {
       final response = await http.get(url);
@@ -61,12 +62,16 @@ class _HomeScreenState extends State<HomeScreen>
           final device = user["device"];
 
           setState(() {
-            _totalCapacity = device["maxVolume"] ?? 2000.0;
-            _waterLevel = device["waterLevel"] ?? 75.0;
-            _waterQuality = device["turbidity"] ?? 0.0;
+            _totalCapacity =
+                (double.parse(device["maxVolume"]) * 1000); // Convert to liters
+            double waterLevelInCubicMeters = double.parse(device["waterLevel"]);
+            _waterLevel =
+                (waterLevelInCubicMeters / double.parse(device["maxVolume"])) *
+                    100; // Convert to percentage
+            _waterQuality = double.parse(device["turbidity"]) *
+                100; // Convert to percentage
             _isLoading = false;
           });
-
         } else {
           setState(() {
             _errorMessage = "Failed to load data.";
@@ -173,7 +178,8 @@ class _HomeScreenState extends State<HomeScreen>
                       animation: _animationController,
                       builder: (context, child) {
                         return CustomPaint(
-                          size: Size(double.infinity, (constraints.maxHeight * 0.6)),
+                          size: Size(
+                              double.infinity, (constraints.maxHeight * 0.6)),
                           painter: WavePainter(
                             animationValue: _animationController.value,
                             waterLevel: _waterLevel,
