@@ -17,14 +17,14 @@ export class User {
   @Column({ name: "username", unique: true })
   username!: String;
 
-  @Column({ name: "min_water_level", default: 30 })
+  @Column({ name: "min_water_level", type: "decimal", default: 30 })
   minWaterLevel?: number;
 
-  @Column({ name: "min_water_quality", default: 30 })
+  @Column({ name: "min_water_quality", type: "decimal", default: 30 })
   minWaterQuality?: number;
 
   @ManyToOne(() => Device, (device: Device) => device.macAddress)
-  @JoinColumn({ name: "mac_address" })
+  @JoinColumn({ name: "mac_address", referencedColumnName: "macAddress" })
   device!: Device;
 
   @Column({ name: "mac_address" })

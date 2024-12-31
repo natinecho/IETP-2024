@@ -3,6 +3,7 @@ import { Device } from "../entities/device.entity";
 
 export class DeviceRepository {
   private deviceRepo = dataSource.getRepository(Device);
+  
   public async findByMacAddress(macAddress: String) {
     return await this.deviceRepo.findOneBy({ macAddress });
   }

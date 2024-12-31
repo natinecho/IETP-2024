@@ -17,21 +17,21 @@ export class Device {
   @Column({ name: "device_mac_address", unique: true })
   macAddress!: String;
 
-  @Column({ name: "surface_area" })
+  @Column({ name: "surface_area", type: "decimal" })
   surfaceArea!: number;
 
-  @Column({ name: "max_height" })
+  @Column({ name: "max_height", type: "decimal" })
   maxHeight!: number;
 
-  @Column({ name: "temperature", default: 0 })
+  @Column({ name: "temperature", type: "decimal", default: 0 })
   temperature?: number;
 
-  @Column({ name: "turbidity", default: 0 })
+  @Column({ name: "turbidity", type: "decimal", default: 0 })
   turbidity?: number;
 
-  @Column({ name: "water_level", default: 0 })
+  @Column({ name: "water_level", type: "decimal", default: 0 })
   waterLevel?: number;
 
-  @Column({ name: "max_volume" })
+  @Column({ name: "max_volume", type: "decimal" })
   maxVolume!: number;
 }

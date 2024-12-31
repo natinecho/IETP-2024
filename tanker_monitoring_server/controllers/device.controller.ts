@@ -3,36 +3,43 @@ import { RegisterDeviceRequest, UpdateDeviceRequest } from "../express/DeviceReq
 import { DeviceRepository } from "../database/repositories/device.repository";
 import { Device } from "../database/entities/device.entity";
 import { UsageHistoryRepository } from "../database/repositories/usageHistory.repository";
+import { UserRepository } from "../database/repositories/user.repository";
+import { NotificationRepository } from "../database/repositories/notification.repository";
+import { User } from "../database/entities/user.entity";
+import { Notification } from "../database/entities/notification.entity";
 
 export const recordReading = async (req: UpdateDeviceRequest, res: Response) => {
+  const userRepository = new UserRepository;
   const deviceRepository = new DeviceRepository();
   const usageHistoryRepository = new UsageHistoryRepository();
 
   const { macAddress, temperature, turbidity, waterLevel } = req.body;
-
+  
   if (!macAddress || !temperature || !turbidity || !waterLevel) {
     res.status(404).json({
       status: "fail",
       error: "Bad Request.",
     });
-
+    
     return;
   }
-
+  
   const device = await deviceRepository.findByMacAddress(macAddress);
-
+  
   if (!device) {
     res.status(404).json({
       status: "fail",
       error: "Device not found.",
     });
-
+    
     return;
   }
+  
+  const waterVolume = device.surfaceArea * (device.maxHeight - (waterLevel / 100));
 
   const prevVolume = device.waterLevel || 0;
   
-  await deviceRepository.update(macAddress, turbidity, temperature, waterLevel);
+  await deviceRepository.update(macAddress, turbidity, temperature, waterVolume);
   res.status(200).json({
     status: "success",
     data: {
@@ -44,16 +51,53 @@ export const recordReading = async (req: UpdateDeviceRequest, res: Response) => 
     await usageHistoryRepository.add(device.macAddress);
   }
   
-  if (prevVolume > waterLevel) {
+  if (prevVolume > waterVolume) {
     const usageHistory = await usageHistoryRepository.getUsageHistoryToday(device.macAddress);
 
     if (!usageHistory) return;
 
-    usageHistory.volume = (usageHistory.volume || 0) + prevVolume - waterLevel;
+    usageHistory.volume = (usageHistory.volume || 0) + prevVolume - waterVolume;
 
     await usageHistoryRepository.update(usageHistory);
   }
+
+  const users = await userRepository.findByMacaddress(macAddress);
+  
+  await updateNotifications(users, device, waterVolume, turbidity);
 };
+
+async function updateNotifications(users: User[], device: Device, waterLevel: number, turbidity: number){
+  const notificationRepository = new NotificationRepository();
+  users.forEach(async user => {
+    const checkNotifications = await notificationRepository.getNotifications(user.username);
+
+    const notifications : Notification[] = [];
+    if (checkNotifications.length < 2){
+      notifications.push(new Notification());
+      notifications.push(new Notification());
+      notifications[0].username = user.username;
+      notifications[1].username = user.username;
+      notifications[0].type = "volume";
+      notifications[1].type = "turbidity";
+    }
+    else{
+      checkNotifications.forEach(n => notifications.push(n));
+    }
+
+    const minWaterVolume = device.maxVolume * (user.minWaterLevel || 30) / 100;
+    const maxTurbidity = (user.minWaterQuality || 5);
+
+    const volumeNotification = notifications.find(n => n.type == "volume");
+    const turbidityNotification = notifications.find(n => n.type == "turbidity");
+    
+    if (volumeNotification && turbidityNotification) {
+      volumeNotification.value = (waterLevel < minWaterVolume && (device.waterLevel || 0) >= minWaterVolume);
+      turbidityNotification.value = (turbidity > maxTurbidity && (device.turbidity || 0) <= maxTurbidity);
+
+      notificationRepository.setNotifications(notifications);
+    }
+  })
+}
 
 export const registerDevice = async (req: RegisterDeviceRequest, res: Response) => {
   const deviceRepository = new DeviceRepository();
@@ -65,7 +109,7 @@ export const registerDevice = async (req: RegisterDeviceRequest, res: Response) 
   if (checkDevice || macAddress.trim() === "" || !maxHeight || !surfaceArea) {
     res.status(404).json({
       status: "fail",
-      error: "Device not registered.",
+      error: "Device already registered.",
     });
 
     return;

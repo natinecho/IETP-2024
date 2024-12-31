@@ -17,6 +17,14 @@ export class UserRepository {
     });
   }
 
+  public async findByMacaddress(macAddress: String){
+    return await this.userRepo.find({
+      where: {
+        macAddress: macAddress
+      }
+    });
+  }
+
   public async update(user: User) {
     return await this.userRepo.save(user);
   }
