@@ -3,6 +3,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'dart:async'; // For Timer
+
 class StatusScreen extends StatefulWidget {
   final String username;
 
@@ -20,17 +22,20 @@ class _StatusScreenState extends State<StatusScreen> {
     "Temperature": 0.0,
   };
   bool _isLoading = true;
+  late Timer _dataTimer; // Timer for fetching data every 10 seconds
 
   @override
   void initState() {
     super.initState();
     _fetchDeviceData();
+    _dataTimer = Timer.periodic(Duration(seconds: 5), (timer) {
+      _fetchDeviceData(); // Fetch new data every 10 seconds
+    });
   }
 
   Future<void> _fetchDeviceData() async {
     final url = Uri.parse(
         "https://3qphcqlw-3000.uks1.devtunnels.ms/user/${widget.username}");
-        // "https://ietp-smart-water-server.onrender.com/user/${widget.username}");
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -48,8 +53,7 @@ class _StatusScreenState extends State<StatusScreen> {
             _statusValues["Water Level"] =
                 (waterLevelInCubicMeters / maxVolume) * 100;
 
-            _statusValues["Turbidity"] =
-                double.parse(device["turbidity"]);
+            _statusValues["Turbidity"] = double.parse(device["turbidity"]);
             _statusValues["Temperature"] = double.parse(device["temperature"]);
 
             _isLoading = false;
@@ -76,6 +80,12 @@ class _StatusScreenState extends State<StatusScreen> {
     setState(() {
       _status = status;
     });
+  }
+
+  @override
+  void dispose() {
+    _dataTimer.cancel(); // Cancel the timer when the widget is disposed
+    super.dispose();
   }
 
   @override
