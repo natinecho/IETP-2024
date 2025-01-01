@@ -50,8 +50,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _fetchWaterData() async {
     final url = Uri.parse(
-        // "https://3qphcqlw-3000.uks1.devtunnels.ms/user/${widget.username}");
-        "https://ietp-smart-water-server.onrender.com/user/${widget.username}");
+        "https://3qphcqlw-3000.uks1.devtunnels.ms/user/${widget.username}");
+        // "https://ietp-smart-water-server.onrender.com/user/${widget.username}");
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {

@@ -21,7 +21,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Future<void> fetchUsageHistory() async {
     try {
       final response = await http.get(Uri.parse(
-          'http://localhost:3000/user/usage-history/${widget.username}'));
+          'https://3qphcqlw-3000.uks1.devtunnels.ms/user/usage-history/${widget.username}'));
 
       if (response.statusCode == 200) {
         var decodedResponse = json.decode(response.body);
@@ -80,10 +80,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       return ListTile(
                         title: Text('Username: ${widget.username}'),
                         subtitle: Text(
-                            'Date: $formattedDate, Volume: ${history['volume']}'),
+                            'Date: $formattedDate, Volume: ${double.parse(history['volume']) * 1000} L'),
                       );
                     } else {
-                      return const Center(child: Text("No history available"),); // Placeholder for empty index
+                      return const Center(
+                        child: Text("No history available"),
+                      ); // Placeholder for empty index
                     }
                   },
                 ),

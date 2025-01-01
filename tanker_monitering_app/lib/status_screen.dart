@@ -29,8 +29,8 @@ class _StatusScreenState extends State<StatusScreen> {
 
   Future<void> _fetchDeviceData() async {
     final url = Uri.parse(
-        // "https://3qphcqlw-3000.uks1.devtunnels.ms/user/${widget.username}");
-        "https://ietp-smart-water-server.onrender.com/user/${widget.username}");
+        "https://3qphcqlw-3000.uks1.devtunnels.ms/user/${widget.username}");
+        // "https://ietp-smart-water-server.onrender.com/user/${widget.username}");
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -49,7 +49,7 @@ class _StatusScreenState extends State<StatusScreen> {
                 (waterLevelInCubicMeters / maxVolume) * 100;
 
             _statusValues["Turbidity"] =
-                double.parse(device["turbidity"]) * 100;
+                double.parse(device["turbidity"]);
             _statusValues["Temperature"] = double.parse(device["temperature"]);
 
             _isLoading = false;

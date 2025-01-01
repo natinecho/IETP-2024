@@ -23,61 +23,33 @@ class _NotificationPageState extends State<NotificationPage> {
   @override
   void initState() {
     super.initState();
-    fetchUserDataAndNotify();
+    fetchNotifications();
   }
 
-  Future<void> fetchUserDataAndNotify() async {
-    const userApiUrl = 'https://3qphcqlw-3000.uks1.devtunnels.ms/user/';
-    const notificationApiUrl =
-        'https://3qphcqlw-3000.uks1.devtunnels.ms/user/notification';
+  Future<void> fetchNotifications() async {
 
     try {
-      // Step 1: Fetch user data
-      final userResponse = await http.get(
-        Uri.parse('$userApiUrl${widget.username}'),
-        headers: {'Content-Type': 'application/json'},
+      // Fetch notifications with username as a query parameter
+      final response = await http.get(
+        Uri.parse('https://3qphcqlw-3000.uks1.devtunnels.ms/user/notification/${widget.username}'),
       );
 
-      if (userResponse.statusCode != 200) {
-        throw Exception('Failed to fetch user data');
-      }
-
-      final userData = jsonDecode(userResponse.body);
-      if (userData["status"] != "success") {
-        throw Exception('User data fetch unsuccessful');
-      }
-
-      final device = userData["data"]["user"]["device"];
-      final waterLevel = device["waterLevel"];
-      final turbidity = device["turbidity"];
-
-      // Step 2: Send data to notification API
-      final notificationResponse = await http.post(
-        Uri.parse(notificationApiUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "username": widget.username,
-          "waterLevel": waterLevel,
-          "turbidity": turbidity,
-        }),
-      );
-
-      if (notificationResponse.statusCode != 200) {
+      if (response.statusCode != 200) {
         throw Exception('Failed to fetch notifications');
       }
 
-      final notificationData = jsonDecode(notificationResponse.body);
+      final notificationData = jsonDecode(response.body);
       if (notificationData["status"] != "success") {
         throw Exception('Notification fetch unsuccessful');
       }
 
       final body = notificationData["body"];
       setState(() {
-        // Step 3: Populate notifications list
+        // Populate notifications list based on response
         if (body["waterLevelNotification"] == true) {
           notifications.add({
             "title": "Water Level Alert",
-            "body": "Water level is at $waterLevel%",
+            "body": "Water level is at critical levels.",
             "icon": Icons.water_drop,
             "color": Colors.blue,
           });
@@ -85,7 +57,7 @@ class _NotificationPageState extends State<NotificationPage> {
         if (body["turbidityNotification"] == true) {
           notifications.add({
             "title": "Turbidity Alert",
-            "body": "Turbidity is at $turbidity NTU",
+            "body": "Turbidity is at concerning levels.",
             "icon": Icons.warning_amber_rounded,
             "color": Colors.orange,
           });

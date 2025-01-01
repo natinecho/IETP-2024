@@ -51,7 +51,7 @@ class _UserProfileState extends State<UserProfile> {
       final String minLevel = waterLevelController.text;
 
       final url =
-          Uri.parse('https://ietp-smart-water-server.onrender.com/user');
+          Uri.parse('https://3qphcqlw-3000.uks1.devtunnels.ms/user');
 
       try {
         final response = await http.patch(
@@ -106,9 +106,8 @@ Future<void> _changePassword() async {
       return;
     }
 
-    final url = Uri.parse(
-        'https://ietp-smart-water-server.onrender.com/user/update-password');
-    // final url = Uri.parse('https://3qphcqlw-3000.uks1.devtunnels.ms/user');
+    // final url = Uri.parse( 'https://ietp-smart-water-server.onrender.com/user/update-password');
+    final url = Uri.parse('https://3qphcqlw-3000.uks1.devtunnels.ms/user/update-password');
 
     try {
       final response = await http.patch(
