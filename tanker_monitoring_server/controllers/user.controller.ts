@@ -296,7 +296,8 @@ export const usageHistoryController = async (req: Request, res: Response) => {
     return;
   }
 
-  const usageHistory = await usageHistoryRepository.getUsageHistory(user.device.macAddress);
+  const usageHistory : UsageHistory[] = [];
+  (await usageHistoryRepository.getUsageHistory(user.device.macAddress)).forEach((history) => usageHistory.unshift(history));
 
   res.status(200).json({
     status: "success",
