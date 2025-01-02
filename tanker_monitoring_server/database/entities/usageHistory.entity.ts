@@ -15,6 +15,6 @@ export class UsageHistory {
     @Column({name: "date"})
     date!: Date;
 
-    @Column({name: "volume", type: "decimal", default: 0})
-    volume?: number;
+    @Column({name: "volume", type: "decimal"})
+    volume!: number;
 }

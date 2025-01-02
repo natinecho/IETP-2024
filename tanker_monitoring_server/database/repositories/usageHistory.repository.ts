@@ -7,6 +7,7 @@ export class UsageHistoryRepository {
     public async add(macAddress: String){
         const usageHistory = new UsageHistory();
         usageHistory.macaddress = macAddress;
+        usageHistory.volume = 0;
         usageHistory.date = new Date();
         usageHistory.date.setHours(3, 0, 0, 0);
         return await this.usageHistoryRepo.save(usageHistory);
@@ -32,7 +33,10 @@ export class UsageHistoryRepository {
             where: {
                 macaddress: macAddress
             },
-            take: 30
+            take: 30,
+            order: {
+                date: "DESC",
+            },
         });
     }
 }
