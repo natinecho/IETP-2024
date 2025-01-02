@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart'; // Import for date formatting
+import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 
 class HistoryScreen extends StatefulWidget {
-  final String username; // Accept username to display usage history
+  final String username;
 
   const HistoryScreen({super.key, required this.username});
 
@@ -17,7 +18,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
   bool isLoading = true;
   String errorMessage = '';
 
-  // Function to fetch the usage history
   Future<void> fetchUsageHistory() async {
     try {
       final response = await http.get(Uri.parse(
@@ -26,7 +26,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
       if (response.statusCode == 200) {
         var decodedResponse = json.decode(response.body);
 
-        // Check if the expected keys exist
         if (decodedResponse is Map &&
             decodedResponse['body'] != null &&
             decodedResponse['body']['usageHistory'] != null &&
@@ -55,6 +54,40 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
+  List<Map<String, dynamic>> _generateLineChartData() {
+    return usageHistory.asMap().entries.map((entry) {
+      final index = entry.key.toDouble();
+      final volume = double.parse(entry.value['volume']) * 1000;
+      final date = entry.value['date'];
+      return {
+        'spot': FlSpot(index, volume),
+        'date': date,
+      };
+    }).toList();
+  }
+
+  String _getDateForIndex(int index) {
+    if (index < usageHistory.length) {
+      final entry = usageHistory[index];
+      final date = DateTime.parse(entry['date']);
+      return DateFormat('MMM d').format(date);
+    }
+    return '';
+  }
+
+  double _calculateDailyConsumption() {
+    final today = DateTime.now();
+    return usageHistory
+        .where((entry) {
+          final date = DateTime.parse(entry['date']);
+          return date.year == today.year &&
+              date.month == today.month &&
+              date.day == today.day;
+        })
+        .map((entry) => double.parse(entry['volume']) * 1000)
+        .fold(0.0, (sum, volume) => sum + volume);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -63,32 +96,97 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final dailyConsumption = _calculateDailyConsumption();
+    final lineChartData = _generateLineChartData();
+
     return Scaffold(
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : errorMessage.isNotEmpty
               ? Center(child: Text(errorMessage))
-              : ListView.builder(
-                  itemCount: usageHistory.length,
-                  itemBuilder: (context, index) {
-                    // Check if the list is non-empty before accessing
-                    if (index < usageHistory.length) {
-                      final history = usageHistory[index];
-                      final date = DateTime.parse(history['date']);
-                      final formattedDate = DateFormat.yMMMd().format(date);
-
-                      return ListTile(
-                        title: Text('Username: ${widget.username}'),
-                        subtitle: Text(
-                            'Date: $formattedDate, Volume: ${double.parse(history['volume']) * 1000} L'),
-                      );
-                    } else {
-                      return const Center(
-                        child: Text("No history available"),
-                      ); // Placeholder for empty index
-                    }
-                  },
-                ),
+              : usageHistory.isEmpty
+                  ? const Center(child: Text("No usage history available"))
+                  : Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: [
+                          // Daily Consumption Card
+                          Card(
+                            elevation: 2,
+                            color: Colors.grey[200],
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Daily Water Consumption',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '${dailyConsumption.toStringAsFixed(2)} L',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Line Chart
+                          Expanded(
+                            child: LineChart(
+                              LineChartData(
+                                gridData: FlGridData(show: true),
+                                titlesData: FlTitlesData(
+                                  leftTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      reservedSize: 40,
+                                      getTitlesWidget: (value, _) => Text(
+                                        '${value.toInt()} L',
+                                        style: const TextStyle(fontSize: 10),
+                                      ),
+                                    ),
+                                  ),
+                                  bottomTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                      showTitles:false,
+                                    ),
+                                  ),
+                                  topTitles: AxisTitles(
+                                    sideTitles: SideTitles(showTitles: false),
+                                  ),
+                                  rightTitles: AxisTitles(
+                                    sideTitles: SideTitles(showTitles: false),
+                                  ),
+                                ),
+                                borderData: FlBorderData(show: true),
+                                lineBarsData: [
+                                  LineChartBarData(
+                                    isCurved: true,
+                                    spots: lineChartData
+                                        .map((data) => data['spot'] as FlSpot)
+                                        .toList(),
+                                    color:Colors.blue,
+                                    barWidth: 4,
+                                    belowBarData: BarAreaData(
+                                      show: true,
+                                      color: Colors.blue.withOpacity(0.2),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
     );
   }
 }

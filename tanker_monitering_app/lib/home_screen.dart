@@ -1,11 +1,11 @@
 // home_screen.dart
 
+import 'dart:async'; // Import Timer
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-// Singleton class to manage notifications
 class Notifications {
   static final List<Map<String, String>> _notifications = [];
 
@@ -27,8 +27,7 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   double _waterLevel = 75; // Default water level percentage
   double _totalCapacity = 2000; // Default total capacity in liters
   double _waterQuality = 0; // Default water quality
@@ -36,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen>
   String? _errorMessage;
 
   late AnimationController _animationController;
+  Timer? _dataFetchTimer; // Timer to fetch data periodically
 
   @override
   void initState() {
@@ -45,13 +45,21 @@ class _HomeScreenState extends State<HomeScreen>
       duration: const Duration(seconds: 2),
     )..repeat();
 
-    _fetchWaterData();
+    _fetchWaterData(); // Fetch data immediately on init
+    _startPeriodicDataFetch(); // Start the periodic data fetch
   }
 
+  // Method to start fetching data every 10 seconds
+  void _startPeriodicDataFetch() {
+    _dataFetchTimer = Timer.periodic(Duration(seconds: 5), (_) {
+      _fetchWaterData();
+    });
+  }
+
+  // Method to fetch the water data
   Future<void> _fetchWaterData() async {
-    final url = Uri.parse(
-        "https://3qphcqlw-3000.uks1.devtunnels.ms/user/${widget.username}");
-        // "https://ietp-smart-water-server.onrender.com/user/${widget.username}");
+    final url = Uri.parse("https://3qphcqlw-3000.uks1.devtunnels.ms/user/${widget.username}");
+
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -62,14 +70,10 @@ class _HomeScreenState extends State<HomeScreen>
           final device = user["device"];
 
           setState(() {
-            _totalCapacity =
-                (double.parse(device["maxVolume"]) * 1000); // Convert to liters
+            _totalCapacity = (double.parse(device["maxVolume"]) * 1000); // Convert to liters
             double waterLevelInCubicMeters = double.parse(device["waterLevel"]);
-            _waterLevel =
-                (waterLevelInCubicMeters / double.parse(device["maxVolume"])) *
-                    100; // Convert to percentage
-            _waterQuality = double.parse(device["turbidity"]) *
-                100; // Convert to percentage
+            _waterLevel = (waterLevelInCubicMeters / double.parse(device["maxVolume"])) * 100; // Convert to percentage
+            _waterQuality = double.parse(device["turbidity"]) * 100; // Convert to percentage
             _isLoading = false;
           });
         } else {
@@ -95,6 +99,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void dispose() {
     _animationController.dispose();
+    _dataFetchTimer?.cancel(); // Cancel the timer when the widget is disposed
     super.dispose();
   }
 
@@ -178,8 +183,7 @@ class _HomeScreenState extends State<HomeScreen>
                       animation: _animationController,
                       builder: (context, child) {
                         return CustomPaint(
-                          size: Size(
-                              double.infinity, (constraints.maxHeight * 0.6)),
+                          size: Size(double.infinity, constraints.maxHeight * 0.6),
                           painter: WavePainter(
                             animationValue: _animationController.value,
                             waterLevel: _waterLevel,
