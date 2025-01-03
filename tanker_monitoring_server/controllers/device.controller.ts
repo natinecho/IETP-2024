@@ -35,7 +35,7 @@ export const recordReading = async (req: UpdateDeviceRequest, res: Response) => 
     return;
   }
   
-  var waterVolume = device.surfaceArea * (device.maxHeight - (waterLevel / 100));
+  var waterVolume = device.surfaceArea * (device.maxHeight - ((waterLevel - 6) / 100));
 
   if (waterVolume < 0) waterVolume = 0;
   else if (waterVolume > device.maxVolume) waterVolume = device.maxVolume
@@ -94,8 +94,8 @@ async function updateNotifications(users: User[], device: Device, waterLevel: nu
     const turbidityNotification = notifications.find(n => n.type == "turbidity");
     
     if (volumeNotification && turbidityNotification) {
-      volumeNotification.value = (waterLevel < minWaterVolume && (device.waterLevel || 0) >= minWaterVolume);
-      turbidityNotification.value = (turbidity > maxTurbidity && (device.turbidity || 0) <= maxTurbidity);
+      volumeNotification.value = (waterLevel < minWaterVolume);
+      turbidityNotification.value = (turbidity > maxTurbidity);
 
       notificationRepository.setNotifications(notifications);
     }
